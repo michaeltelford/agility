@@ -13,7 +13,12 @@ class User < ActiveRecord::Base
     administrator :boolean, :default => false
     timestamps
   end
-  attr_accessible :name, :email_address, :password, :password_confirmation, :current_password
+  attr_accessible :name, :email_address, :password, :password_confirmation, :current_password, :task_assignments, :tasks
+
+  validates_presence_of :name, :email_address
+
+  has_many :task_assignments, :dependent => :destroy, :inverse_of => :user
+  has_many :tasks, :through => :task_assignments
 
   # This gives admin rights and an :active state to the first sign-up.
   # Just remove it if you don't want that
@@ -54,7 +59,7 @@ class User < ActiveRecord::Base
   end
 
   def signed_up?
-    state=="active"
+    state == "active"
   end
 
   # --- Permissions --- #
@@ -66,10 +71,15 @@ class User < ActiveRecord::Base
 
   def update_permitted?
     acting_user.administrator? ||
-      (acting_user == self && only_changed?(:email_address, :crypted_password,
-                                            :current_password, :password, :password_confirmation))
-    # Note: crypted_password has attr_protected so although it is permitted to change, it cannot be changed
-    # directly from a form submission.
+      (acting_user == self && only_changed?(
+        :email_address,                                             :crypted_password,
+        :current_password, 
+        :password, 
+        :password_confirmation
+      ))
+    # Note: crypted_password has attr_protected so although 
+    # it is permitted to change, it cannot be changed directly from 
+    # a form submission.
   end
 
   def destroy_permitted?

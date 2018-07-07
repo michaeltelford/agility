@@ -6,7 +6,14 @@ class Task < ActiveRecord::Base
     description :string
     timestamps
   end
-  attr_accessible :description
+  attr_accessible :description, :story, :story_id, :task_assignments, :users
+
+  validates_presence_of :description
+
+  belongs_to :story, inverse_of: :tasks, counter_cache: true
+  
+  has_many :task_assignments, dependent: :destroy, inverse_of: :task
+  has_many :users, through: :task_assignments
 
   # --- Permissions --- #
 
